@@ -1,0 +1,16 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: cognita-db
+    environment:
+      POSTGRES_USER: cognita
+      POSTGRES_PASSWORD: cognita
+      POSTGRES_DB: cognita
+    ports:
+      - "5432:5432"
+    volumes:
+      - cognita-pgdata:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+
+volumes:
+  cognita-pgdata:
