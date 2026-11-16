@@ -135,3 +135,50 @@ export type SearchParams = {
 
 export const searchChunks = (params: SearchParams) =>
   request<SearchResponse>("/api/search", json("POST", params));
+
+export type AnswerSource = {
+  number: number;
+  chunk_id: number;
+  chunk_index: number;
+  document_id: string;
+  filename: string;
+  page_start: number;
+  page_end: number;
+  score: number;
+  text: string;
+  cited: boolean;
+};
+
+export type AskResponse = {
+  question: string;
+  answer: string;
+  grounded: boolean;
+  not_found: boolean;
+  cited: number[];
+  invalid_citations: number[];
+  sources: AnswerSource[];
+  llm_provider: string;
+  llm_model: string;
+  embedding_model: string;
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    thinking_tokens: number;
+    total_tokens: number;
+  };
+  finish_reason: string | null;
+  timings: Record<string, number>;
+  messages: { role: string; content: string }[];
+  warnings: string[];
+};
+
+export type AskParams = {
+  question: string;
+  top_k?: number;
+  collection_id?: string;
+  document_id?: string;
+  min_score?: number;
+};
+
+export const askQuestion = (params: AskParams) =>
+  request<AskResponse>("/api/ask", json("POST", params));

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app import __version__
-from app.api import collections, documents, health, search
+from app.api import ask, collections, documents, health, search
 from app.core.config import get_settings
 from app.core.logging import setup_logging
 from app.providers.base import ProviderError
@@ -41,6 +41,7 @@ def create_app() -> FastAPI:
     app.include_router(collections.router, prefix="/api")
     app.include_router(documents.router, prefix="/api")
     app.include_router(search.router, prefix="/api")
+    app.include_router(ask.router, prefix="/api")
     logger.info(
         "app_started",
         extra={"data": {"env": settings.app_env, "llm": settings.llm_provider}},

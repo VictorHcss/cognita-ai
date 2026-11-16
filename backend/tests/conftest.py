@@ -8,11 +8,12 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.api import documents as documents_api
+from app.core.config import Settings, get_settings
 from app.db.models import EMBEDDING_DIM, Base
 from app.db.session import get_db
 from app.main import app
-from app.providers.fake import FakeEmbeddingProvider
-from app.providers.registry import get_embedding_provider
+from app.providers.fake import FakeEmbeddingProvider, FakeLLMProvider
+from app.providers.registry import get_embedding_provider, get_llm_provider
 from app.storage.base import get_storage
 from app.storage.local import LocalStorage
 
@@ -59,6 +60,9 @@ def client(session_factory, tmp_path, monkeypatch) -> Iterator[TestClient]:
     embedder = FakeEmbeddingProvider(dimensions=EMBEDDING_DIM)
     monkeypatch.setattr(documents_api, "get_embedding_provider", lambda: embedder)
     app.dependency_overrides[get_embedding_provider] = lambda: embedder
+    app.dependency_overrides[get_llm_provider] = lambda: FakeLLMProvider()
+    # Configuração padrão (ignora o .env da máquina): testes não dependem de chaves reais.
+    app.dependency_overrides[get_settings] = lambda: Settings(_env_file=None)
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()

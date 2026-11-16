@@ -79,4 +79,4 @@ Identidade visual, tokens de cor, tipografia e componentes: [docs/design-system.
 
 ## Roadmap
 
-Veja [docs/roadmap.md](docs/roadmap.md). Status atual: **Etapa 4 — Busca semântica** concluída.
+Veja [docs/roadmap.md](docs/roadmap.md). Status atual: **Etapa 5 — RAG funcional** concluída.

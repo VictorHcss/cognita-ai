@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import SecretStr
+from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ProviderName = Literal["fake", "gemini", "openai", "groq", "ollama"]
@@ -33,7 +33,21 @@ class Settings(BaseSettings):
     supabase_bucket: str = "documents"
 
     llm_provider: ProviderName = "fake"
-    llm_model: str = ""
+    llm_model: str = ""  # vazio = padrão do provedor (Gemini: gemini-3.5-flash-lite)
+    llm_temperature: float = 0.2  # baixa: respostas fiéis às fontes, pouca "criatividade"
+    llm_max_tokens: int = 1024
+    llm_thinking_level: str = ""  # vazio = padrão do modelo; ex.: "minimal", "low"
+
+    # RAG: quantos trechos entram no contexto e similaridade mínima para usá-los
+    rag_top_k: int = 5
+    rag_min_score: float | None = None  # vazio = sem filtro; ex.: 0.55
+
+    @field_validator("rag_min_score", mode="before")
+    @classmethod
+    def _empty_is_none(cls, value: object) -> object:
+        # "RAG_MIN_SCORE=" no .env significa "sem filtro", não um número inválido.
+        return None if isinstance(value, str) and not value.strip() else value
+
     embedding_provider: ProviderName = "fake"
     embedding_model: str = ""
     embedding_dimensions: int = 768

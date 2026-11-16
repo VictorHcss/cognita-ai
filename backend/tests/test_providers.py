@@ -27,13 +27,30 @@ def test_fake_embeddings_are_deterministic_and_normalized() -> None:
     assert math.isclose(math.sqrt(sum(v * v for v in a1)), 1.0, rel_tol=1e-9)
 
 
-def test_fake_llm_reports_usage() -> None:
+def test_fake_llm_cites_first_source_or_says_not_found() -> None:
     provider = build_llm_provider(Settings(_env_file=None))
-    result = asyncio.run(provider.generate([ChatMessage("user", "O que é RAG?")]))
-    assert "O que é RAG?" in result.text
+    with_sources = "Fontes:\n\n[1] a.md — p. 1\ntexto\n\nPergunta: x"
+    result = asyncio.run(provider.generate([ChatMessage("user", with_sources)]))
+    assert result.text.endswith("[1].")
     assert result.usage.total_tokens > 0
+    empty = asyncio.run(provider.generate([ChatMessage("user", "Pergunta sem fontes")]))
+    assert empty.text == provider.NOT_FOUND
 
 
 def test_unimplemented_provider_raises() -> None:
     with pytest.raises(ProviderNotAvailableError):
         build_llm_provider(Settings(_env_file=None, llm_provider="openai"))
+
+
+def test_env_example_loads(monkeypatch) -> None:
+    """O .env.example (com campos vazios) precisa carregar sem erro."""
+    from pathlib import Path
+
+    for line in Path(".env.example").read_text(encoding="utf-8").splitlines():
+        if line and not line.startswith("#") and "=" in line:
+            key, value = line.split("=", 1)
+            monkeypatch.setenv(key, value)
+    settings = Settings(_env_file=None)
+    assert settings.rag_min_score is None
+    assert settings.llm_thinking_level == ""
+    assert settings.rag_top_k == 5

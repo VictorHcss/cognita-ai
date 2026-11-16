@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 /** Etapa do roadmap já concluída — módulos até aqui estão disponíveis. */
-export const CURRENT_STAGE = 4;
+export const CURRENT_STAGE = 5;
 
 export type AppModule = {
   href: string;
@@ -42,8 +42,8 @@ export const MODULES: AppModule[] = [
   {
     href: "/chat",
     label: "Chat",
-    description: "Converse com suas bases de conhecimento, com fontes.",
-    stage: 6,
+    description: "Pergunte aos seus documentos e receba respostas com as fontes citadas.",
+    stage: 5,
     icon: MessagesSquare,
     group: "Conhecimento",
   },

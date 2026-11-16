@@ -25,16 +25,24 @@ class GenerationParams:
     temperature: float = 0.2
     max_tokens: int = 1024
     top_p: float = 1.0
+    # Modelos que "raciocinam" antes de responder (ex.: Gemini 3): None = padrão do modelo.
+    # Raciocínio consome tokens de saída — com limite baixo, a resposta pode sair cortada.
+    thinking_level: str | None = None
 
 
 @dataclass
 class TokenUsage:
     prompt_tokens: int = 0
     completion_tokens: int = 0
+    thinking_tokens: int = 0  # tokens de raciocínio (cobrados como saída)
 
     @property
     def total_tokens(self) -> int:
-        return self.prompt_tokens + self.completion_tokens
+        return self.prompt_tokens + self.completion_tokens + self.thinking_tokens
+
+
+# Por que a geração parou. "length" = atingiu o limite de tokens (resposta incompleta).
+FinishReason = Literal["stop", "length", "safety", "other"]
 
 
 @dataclass
@@ -44,6 +52,7 @@ class LLMResult:
     model: str
     usage: TokenUsage = field(default_factory=TokenUsage)
     latency_ms: float = 0.0
+    finish_reason: FinishReason = "stop"
 
 
 @runtime_checkable

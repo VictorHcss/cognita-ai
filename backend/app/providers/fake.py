@@ -2,6 +2,7 @@
 
 import hashlib
 import math
+import re
 import time
 
 from app.providers.base import (
@@ -12,9 +13,15 @@ from app.providers.base import (
     TokenUsage,
 )
 
+_SOURCE_LINE = re.compile(r"^\[(\d+)\]", re.MULTILINE)
+
 
 class FakeLLMProvider:
+    """LLM simulada: se o prompt traz fontes numeradas ([1], [2]...), "responde" citando
+    a primeira; sem fontes, diz que não encontrou. Permite testar o RAG sem custo."""
+
     name = "fake"
+    NOT_FOUND = "Não encontrei essa informação nos documentos."
 
     def __init__(self, model: str = "fake-echo") -> None:
         self.model = model or "fake-echo"
@@ -24,7 +31,12 @@ class FakeLLMProvider:
     ) -> LLMResult:
         start = time.perf_counter()
         last_user = next((m.content for m in reversed(messages) if m.role == "user"), "")
-        text = f"[fake] Você perguntou: {last_user}"
+        sources = _SOURCE_LINE.findall(last_user)
+        text = (
+            f"[fake] Resposta simulada com base na fonte [{sources[0]}]."
+            if sources
+            else self.NOT_FOUND
+        )
         prompt_tokens = sum(len(m.content.split()) for m in messages)
         return LLMResult(
             text=text,
