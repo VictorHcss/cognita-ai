@@ -5,9 +5,12 @@ from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Query
 from sqlalchemy import select
 
 from app.api.deps import DbDep, SettingsDep, StorageDep
-from app.api.schemas import DocumentOut, PageOut
-from app.db.models import Document, DocumentPage, DocumentStatus
+from app.api.schemas import ChunkOut, DocumentOut, PageOut
+from app.core.config import get_settings
+from app.db.models import Chunk, Document, DocumentPage, DocumentStatus
 from app.db.session import get_sessionmaker
+from app.providers.base import ProviderError
+from app.providers.registry import get_embedding_provider
 from app.services import documents as service
 from app.storage.base import FileStorage
 
@@ -16,8 +19,17 @@ router = APIRouter(prefix="/documents", tags=["documentos"])
 
 def _process_in_background(storage: FileStorage, document_id: uuid.UUID) -> None:
     # Roda depois da resposta HTTP: precisa de uma sessão própria.
+    settings = get_settings()
+    chunking = service.ChunkingConfig(settings.chunk_size, settings.chunk_overlap)
     with get_sessionmaker()() as db:
-        service.process_document(db, storage, document_id)
+        try:
+            embedder = get_embedding_provider()
+        except ProviderError as exc:  # ex.: chave de API ausente
+            doc = db.get(Document, document_id)
+            if doc:
+                service.mark_failed(db, doc, f"Provedor de embeddings indisponível: {exc}")
+            return
+        service.process_document(db, storage, embedder, document_id, chunking)
 
 
 def _get_or_404(db: DbDep, document_id: uuid.UUID) -> Document:
@@ -72,6 +84,12 @@ def get_document(document_id: uuid.UUID, db: DbDep) -> Document:
 @router.get("/{document_id}/pages", response_model=list[PageOut])
 def get_pages(document_id: uuid.UUID, db: DbDep) -> list[DocumentPage]:
     return _get_or_404(db, document_id).pages
+
+
+@router.get("/{document_id}/chunks", response_model=list[ChunkOut])
+def get_chunks(document_id: uuid.UUID, db: DbDep) -> list[Chunk]:
+    """Chunks do documento com metadados (sem o vetor, que tem 768 números)."""
+    return _get_or_404(db, document_id).chunks
 
 
 @router.post("/{document_id}/reprocess", response_model=DocumentOut)

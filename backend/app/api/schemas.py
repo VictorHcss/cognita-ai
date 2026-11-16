@@ -33,6 +33,7 @@ class DocumentOut(BaseModel):
     error: str | None
     page_count: int
     char_count: int
+    chunk_count: int
     created_at: datetime
     updated_at: datetime
 
@@ -42,3 +43,16 @@ class PageOut(BaseModel):
 
     page_number: int
     text: str
+
+
+class ChunkOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    chunk_index: int
+    text: str
+    page_start: int
+    page_end: int
+    char_start: int
+    char_end: int
+    token_estimate: int
+    embedding_model: str

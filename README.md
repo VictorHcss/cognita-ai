@@ -62,4 +62,4 @@ cd frontend && npm run lint && npm run build
 
 ## Roadmap
 
-Veja [docs/roadmap.md](docs/roadmap.md). Status atual: **Etapa 2 — Biblioteca documental** concluída.
+Veja [docs/roadmap.md](docs/roadmap.md). Status atual: **Etapa 3 — Processamento e embeddings** concluída.

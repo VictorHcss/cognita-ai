@@ -8,9 +8,10 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.api import documents as documents_api
-from app.db.models import Base
+from app.db.models import EMBEDDING_DIM, Base
 from app.db.session import get_db
 from app.main import app
+from app.providers.fake import FakeEmbeddingProvider
 from app.storage.base import get_storage
 from app.storage.local import LocalStorage
 
@@ -24,7 +25,8 @@ def engine():
     eng = create_engine(TEST_DATABASE_URL)
     try:
         with eng.connect() as conn:
-            conn.execute(text("select 1"))
+            conn.execute(text("create extension if not exists vector"))
+            conn.commit()
     except OperationalError:
         pytest.skip("Banco de teste indisponível — rode `docker compose up -d`.")
     Base.metadata.drop_all(eng)
@@ -53,6 +55,8 @@ def client(session_factory, tmp_path, monkeypatch) -> Iterator[TestClient]:
     app.dependency_overrides[get_db] = _db
     app.dependency_overrides[get_storage] = lambda: storage
     monkeypatch.setattr(documents_api, "get_sessionmaker", lambda: session_factory)
+    embedder = FakeEmbeddingProvider(dimensions=EMBEDDING_DIM)
+    monkeypatch.setattr(documents_api, "get_embedding_provider", lambda: embedder)
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()

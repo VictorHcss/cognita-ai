@@ -223,6 +223,7 @@ export function Library() {
                   <th className="px-3 py-2 font-medium">Documento</th>
                   <th className="px-3 py-2 font-medium">Status</th>
                   <th className="px-3 py-2 text-right font-medium">Páginas</th>
+                  <th className="px-3 py-2 text-right font-medium">Chunks</th>
                   <th className="px-3 py-2 text-right font-medium">Tamanho</th>
                   <th className="px-3 py-2 font-medium">Enviado</th>
                   <th className="px-3 py-2" />
@@ -245,6 +246,7 @@ export function Library() {
                       <StatusBadge status={d.status} />
                     </td>
                     <td className="px-3 py-2 text-right tabular-nums">{d.page_count || "—"}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{d.chunk_count || "—"}</td>
                     <td className="px-3 py-2 text-right tabular-nums">
                       {formatBytes(d.size_bytes)}
                     </td>

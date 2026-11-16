@@ -9,6 +9,10 @@ from typing import Literal, Protocol, runtime_checkable
 
 Role = Literal["system", "user", "assistant"]
 
+# Alguns provedores (ex.: Gemini) geram vetores otimizados conforme o uso:
+# "document" para os trechos indexados, "query" para a pergunta do usuário.
+EmbeddingTask = Literal["document", "query"]
+
 
 @dataclass(frozen=True)
 class ChatMessage:
@@ -58,4 +62,10 @@ class EmbeddingProvider(Protocol):
     model: str
     dimensions: int
 
-    async def embed(self, texts: list[str]) -> list[list[float]]: ...
+    async def embed(
+        self, texts: list[str], task: EmbeddingTask = "document"
+    ) -> list[list[float]]: ...
+
+
+class ProviderError(RuntimeError):
+    """Falha ao chamar um provedor externo (rede, cota, chave inválida...)."""

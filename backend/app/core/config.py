@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     local_storage_dir: str = "data/uploads"
     max_upload_mb: int = 25
 
+    # Chunking (em caracteres; ~4 caracteres ≈ 1 token)
+    chunk_size: int = 1000
+    chunk_overlap: int = 150
+
     supabase_url: str = ""
     supabase_service_key: SecretStr = SecretStr("")
     supabase_bucket: str = "documents"

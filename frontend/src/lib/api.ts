@@ -29,11 +29,23 @@ export type DocumentItem = {
   error: string | null;
   page_count: number;
   char_count: number;
+  chunk_count: number;
   created_at: string;
   updated_at: string;
 };
 
 export type DocumentPage = { page_number: number; text: string };
+
+export type DocumentChunk = {
+  chunk_index: number;
+  text: string;
+  page_start: number;
+  page_end: number;
+  char_start: number;
+  char_end: number;
+  token_estimate: number;
+  embedding_model: string;
+};
 
 export class ApiError extends Error {
   constructor(
@@ -75,6 +87,8 @@ export const listDocuments = (collectionId?: string) =>
 export const getDocument = (id: string) => request<DocumentItem>(`/api/documents/${id}`);
 export const getDocumentPages = (id: string) =>
   request<DocumentPage[]>(`/api/documents/${id}/pages`);
+export const getDocumentChunks = (id: string) =>
+  request<DocumentChunk[]>(`/api/documents/${id}/chunks`);
 export const reprocessDocument = (id: string) =>
   request<DocumentItem>(`/api/documents/${id}/reprocess`, { method: "POST" });
 export const deleteDocument = (id: string) =>

@@ -1,16 +1,27 @@
 """Regras de negócio da biblioteca documental: upload, processamento, exclusão."""
 
+import asyncio
 import hashlib
 import logging
 import time
 import uuid
+from dataclasses import dataclass
 
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.db.models import Collection, Document, DocumentPage, DocumentStatus
+from app.db.models import (
+    EMBEDDING_DIM,
+    Chunk,
+    Collection,
+    Document,
+    DocumentPage,
+    DocumentStatus,
+)
+from app.processing.chunking import chunk_pages
 from app.processing.cleaning import clean_text
 from app.processing.extractors import ExtractionError, extract, file_type_from_name
+from app.providers.base import EmbeddingProvider, ProviderError
 from app.storage.base import FileStorage, StorageError
 
 logger = logging.getLogger("cognita.documents")
@@ -80,8 +91,31 @@ def create_document(
     return doc
 
 
-def process_document(db: Session, storage: FileStorage, document_id: uuid.UUID) -> Document:
-    """Extrai, limpa e grava o texto por página. Idempotente: reprocessar substitui as páginas."""
+@dataclass(frozen=True)
+class ChunkingConfig:
+    chunk_size: int = 1000
+    overlap: int = 150
+
+
+def mark_failed(db: Session, doc: Document, message: str) -> Document:
+    doc.status = DocumentStatus.FAILED
+    doc.error = message
+    db.commit()
+    logger.warning("document_failed", extra={"data": {"id": str(doc.id), "error": message}})
+    return doc
+
+
+def process_document(
+    db: Session,
+    storage: FileStorage,
+    embedder: EmbeddingProvider,
+    document_id: uuid.UUID,
+    chunking: ChunkingConfig = ChunkingConfig(),
+) -> Document:
+    """Pipeline de ingestão: extrair → limpar → salvar páginas → chunking → embeddings.
+
+    Idempotente: reprocessar substitui páginas e chunks.
+    """
     doc = db.get(Document, document_id)
     if doc is None:
         raise DocumentError("Documento não encontrado.", 404)
@@ -89,28 +123,68 @@ def process_document(db: Session, storage: FileStorage, document_id: uuid.UUID) 
     doc.status = DocumentStatus.PROCESSING
     doc.error = None
     db.commit()
+    timings: dict[str, float] = {}
 
-    start = time.perf_counter()
+    # 1. Extração e limpeza
+    t0 = time.perf_counter()
     try:
         raw_pages = extract(doc.file_type, storage.read(doc.storage_key))
-        pages = [(p.page_number, clean_text(p.text)) for p in raw_pages]
     except (ExtractionError, StorageError) as exc:
-        doc.status = DocumentStatus.FAILED
-        doc.error = str(exc)
-        db.commit()
-        logger.warning("document_failed", extra={"data": {"id": str(doc.id), "error": str(exc)}})
-        return doc
+        return mark_failed(db, doc, str(exc))
+    pages = [(p.page_number, clean_text(p.text)) for p in raw_pages]
+    timings["extract_ms"] = (time.perf_counter() - t0) * 1000
 
+    db.execute(delete(Chunk).where(Chunk.document_id == doc.id))
     db.execute(delete(DocumentPage).where(DocumentPage.document_id == doc.id))
     db.add_all(DocumentPage(document_id=doc.id, page_number=n, text=t) for n, t in pages)
     doc.page_count = len(pages)
     doc.char_count = sum(len(t) for _, t in pages)
+    doc.chunk_count = 0
+    db.commit()
 
     if doc.char_count == 0:
-        doc.status = DocumentStatus.FAILED
-        doc.error = "Nenhum texto extraído (o PDF pode ser escaneado; OCR ainda não é suportado)."
-    else:
-        doc.status = DocumentStatus.PROCESSED
+        return mark_failed(
+            db, doc, "Nenhum texto extraído (o PDF pode ser escaneado; OCR ainda não é suportado)."
+        )
+
+    # 2. Chunking
+    t0 = time.perf_counter()
+    pieces = chunk_pages(pages, chunking.chunk_size, chunking.overlap)
+    timings["chunk_ms"] = (time.perf_counter() - t0) * 1000
+
+    # 3. Embeddings
+    if embedder.dimensions != EMBEDDING_DIM:
+        return mark_failed(
+            db,
+            doc,
+            f"O provedor gera vetores de {embedder.dimensions} dimensões, mas o banco espera "
+            f"{EMBEDDING_DIM}. Ajuste EMBEDDING_DIMENSIONS.",
+        )
+    t0 = time.perf_counter()
+    try:
+        vectors = asyncio.run(embedder.embed([c.text for c in pieces], task="document"))
+    except ProviderError as exc:
+        return mark_failed(db, doc, f"Falha ao gerar embeddings: {exc}")
+    timings["embed_ms"] = (time.perf_counter() - t0) * 1000
+
+    model = f"{embedder.name}/{embedder.model}"
+    db.add_all(
+        Chunk(
+            document_id=doc.id,
+            chunk_index=c.index,
+            text=c.text,
+            page_start=c.page_start,
+            page_end=c.page_end,
+            char_start=c.char_start,
+            char_end=c.char_end,
+            token_estimate=c.token_estimate,
+            embedding_model=model,
+            embedding=vector,
+        )
+        for c, vector in zip(pieces, vectors, strict=True)
+    )
+    doc.chunk_count = len(pieces)
+    doc.status = DocumentStatus.PROCESSED
     db.commit()
     db.refresh(doc)
 
@@ -121,7 +195,9 @@ def process_document(db: Session, storage: FileStorage, document_id: uuid.UUID) 
                 "id": str(doc.id),
                 "pages": doc.page_count,
                 "chars": doc.char_count,
-                "ms": round((time.perf_counter() - start) * 1000, 1),
+                "chunks": doc.chunk_count,
+                "embedding_model": model,
+                **{k: round(v, 1) for k, v in timings.items()},
             }
         },
     )

@@ -12,9 +12,11 @@ node_modules/
 .next/
 out/
 
-# Ambiente
+# Ambiente (segredos) — nunca versionar
 .env
-.env.local
+.env.*
+env.local
+*.local
 !.env.example
 
 # Dados locais

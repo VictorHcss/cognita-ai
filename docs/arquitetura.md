@@ -33,6 +33,6 @@
 
 | Tema | Opções | Quando decidir |
 |---|---|---|
-| Dimensão dos embeddings | 768 (Gemini) / 1536 (OpenAI) | Etapa 3 — a coluna `vector(n)` depende disso |
+| Dimensão dos embeddings | **Decidido:** 768 (gemini-embedding-001 reduzido) | Etapa 3 |
 | ORM / migrations | **Decidido:** SQLAlchemy 2 + Alembic | Etapa 2 |
 | Processamento assíncrono | **Decidido:** BackgroundTasks (fila se necessário) | Etapa 2 |

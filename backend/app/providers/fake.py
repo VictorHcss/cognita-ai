@@ -4,7 +4,13 @@ import hashlib
 import math
 import time
 
-from app.providers.base import ChatMessage, GenerationParams, LLMResult, TokenUsage
+from app.providers.base import (
+    ChatMessage,
+    EmbeddingTask,
+    GenerationParams,
+    LLMResult,
+    TokenUsage,
+)
 
 
 class FakeLLMProvider:
@@ -49,5 +55,5 @@ class FakeEmbeddingProvider:
         norm = math.sqrt(sum(v * v for v in values)) or 1.0
         return [v / norm for v in values]
 
-    async def embed(self, texts: list[str]) -> list[list[float]]:
+    async def embed(self, texts: list[str], task: EmbeddingTask = "document") -> list[list[float]]:
         return [self._vector(t) for t in texts]
