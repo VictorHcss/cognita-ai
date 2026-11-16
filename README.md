@@ -73,6 +73,10 @@ cd backend && python -m scripts.eval_retrieval evaluation/datasets/temas.json --
 
 Mostra hit@1, hit@3, hit@5, MRR e latência média (ver `docs/aprendizado/04-busca-semantica.md`).
 
+## Design
+
+Identidade visual, tokens de cor, tipografia e componentes: [docs/design-system.md](docs/design-system.md).
+
 ## Roadmap
 
 Veja [docs/roadmap.md](docs/roadmap.md). Status atual: **Etapa 4 — Busca semântica** concluída.

@@ -1,26 +1,144 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* =========================================================================
+   Cognita AI — tokens de design
+   As telas usam SEMPRE os tokens semânticos (bg-surface, text-muted...), nunca
+   cores soltas. Assim os temas claro/escuro trocam tudo de uma vez.
+   Paleta da marca: docs/design-system.md
+   ========================================================================= */
+
+/* O tema é aplicado via atributo data-theme no <html> (ver ThemeScript). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f5f7fb;
+  --surface: #ffffff;
+  --surface-2: #eef2f8; /* hover, cabeçalhos de tabela, áreas recuadas */
+  --border: #dde3ec;
+  --border-strong: #c7d0dd;
+  --text: #101827; /* Midnight Navy */
+  --muted: #5b6779; /* Steel Gray escurecido: contraste AA no fundo claro */
+  --primary: #3978f6; /* Electric Blue */
+  --primary-fill: #2f6ae8; /* fundo de botão: AA com texto branco */
+  --primary-soft: color-mix(in srgb, #3978f6 10%, transparent);
+  --link: #2a5fd6;
+  --accent: #39c6d6; /* Cyan: conexões e "inteligência" */
+  --accent-text: #0d7582;
+  --accent-soft: color-mix(in srgb, #39c6d6 14%, transparent);
+  --success: #1b7a51;
+  --warning: #9c5b00;
+  --danger: #c4363e;
+  --ring: #3978f6;
+  --shadow: 0 1px 2px rgb(16 24 39 / 0.06), 0 1px 1px rgb(16 24 39 / 0.04);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #101827; /* Midnight Navy */
+  --surface: #17243a; /* Deep Slate */
+  --surface-2: #1d2c45;
+  --border: #25344e;
+  --border-strong: #33456a;
+  --text: #e8edf5; /* Cloud White */
+  --muted: #8b98ab; /* Steel Gray, levemente clareado: AA também sobre surface-2 */
+  --primary: #3978f6;
+  --primary-fill: #2f6ae8;
+  --primary-soft: color-mix(in srgb, #3978f6 16%, transparent);
+  --link: #6a9af9; /* azul clareado: AA sobre o navy */
+  --accent: #39c6d6;
+  --accent-text: #39c6d6;
+  --accent-soft: color-mix(in srgb, #39c6d6 14%, transparent);
+  --success: #3fb68b;
+  --warning: #e5a93b;
+  --danger: #f16d74;
+  --ring: #6a9af9;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-fill: var(--primary-fill);
+  --color-primary-soft: var(--primary-soft);
+  --color-link: var(--link);
+  --color-accent: var(--accent);
+  --color-accent-text: var(--accent-text);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-ring: var(--ring);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), var(--font-inter), ui-sans-serif, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+
+  --shadow-card: var(--shadow);
+
+  --animate-fade-in: fade-in 0.25s ease-out both;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
+html {
+  background: var(--bg);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Títulos usam Space Grotesk */
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Troca de tema suave, sem animar o carregamento inicial */
+.theme-transition,
+.theme-transition * {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

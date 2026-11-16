@@ -1,7 +1,9 @@
 "use client";
 
+import { Clock, FileText, Loader2, Search, SearchX, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Alert, Badge, Button, Card, CardHeader, EmptyState, fieldClasses } from "@/components/ui";
 import {
   ApiError,
   type Collection,
@@ -9,6 +11,7 @@ import {
   searchChunks,
   type SearchResponse,
 } from "@/lib/api";
+import { cn } from "@/lib/cn";
 
 const TOP_K_OPTIONS = [3, 5, 10, 20];
 
@@ -16,15 +19,25 @@ function pageLabel(start: number, end: number) {
   return start === end ? `p. ${start}` : `p. ${start}–${end}`;
 }
 
+/** Barra de similaridade em Cyan — a cor dos "elementos de inteligência". */
 function ScoreBar({ score }: { score: number }) {
-  // Similaridade de cosseno típica de embeddings fica entre ~0,3 e ~0,9.
   const pct = Math.max(0, Math.min(100, score * 100));
   return (
-    <div className="flex items-center gap-2" title={`Similaridade de cosseno: ${score.toFixed(4)}`}>
-      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
-        <div className="h-full rounded-full bg-indigo-500" style={{ width: `${pct}%` }} />
+    <div
+      className="flex items-center gap-2"
+      title={`Similaridade de cosseno: ${score.toFixed(4)}`}
+    >
+      <div
+        className="h-1.5 w-20 overflow-hidden rounded-full bg-surface-2"
+        role="meter"
+        aria-label="Similaridade"
+        aria-valuemin={0}
+        aria-valuemax={1}
+        aria-valuenow={Number(score.toFixed(3))}
+      >
+        <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
       </div>
-      <span className="font-mono text-xs tabular-nums">{score.toFixed(3)}</span>
+      <span className="font-mono text-xs text-accent-text tabular-nums">{score.toFixed(3)}</span>
     </div>
   );
 }
@@ -68,109 +81,116 @@ export function SemanticSearch() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="space-y-3">
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Faça uma pergunta sobre seus documentos…"
-            maxLength={2000}
-            aria-label="Pergunta"
-            className="min-w-0 flex-1 rounded-md border border-neutral-300 bg-transparent px-3 py-2 dark:border-neutral-700"
-          />
-          <button
-            type="submit"
-            disabled={loading || !query.trim()}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
-          >
-            {loading ? "Buscando…" : "Buscar"}
-          </button>
-        </div>
-        <div className="flex flex-wrap items-center gap-4 text-sm text-neutral-600 dark:text-neutral-400">
-          <label className="flex items-center gap-2">
-            Coleção
-            <select
-              value={collectionId}
-              onChange={(e) => setCollectionId(e.target.value)}
-              className="rounded-md border border-neutral-300 bg-transparent px-2 py-1 dark:border-neutral-700"
+      <Card className="p-4">
+        <form onSubmit={onSubmit} className="space-y-3">
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="relative min-w-0 flex-1">
+              <Search
+                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted"
+                aria-hidden
+              />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Faça uma pergunta sobre seus documentos…"
+                maxLength={2000}
+                aria-label="Pergunta"
+                className={cn(fieldClasses, "w-full pl-9")}
+              />
+            </div>
+            <Button
+              type="submit"
+              icon={loading ? Loader2 : Sparkles}
+              disabled={loading || !query.trim()}
+              className={cn(loading && "[&>svg]:animate-spin")}
             >
-              <option value="">Todas</option>
-              {collections.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex items-center gap-2">
-            Resultados
-            <select
-              value={topK}
-              onChange={(e) => setTopK(Number(e.target.value))}
-              className="rounded-md border border-neutral-300 bg-transparent px-2 py-1 dark:border-neutral-700"
-            >
-              {TOP_K_OPTIONS.map((k) => (
-                <option key={k} value={k}>
-                  {k}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      </form>
+              {loading ? "Buscando…" : "Buscar"}
+            </Button>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted">
+            <label className="flex items-center gap-2">
+              Coleção
+              <select
+                value={collectionId}
+                onChange={(e) => setCollectionId(e.target.value)}
+                className={cn(fieldClasses, "h-8 pr-8 text-sm")}
+              >
+                <option value="">Todas</option>
+                {collections.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex items-center gap-2">
+              Resultados
+              <select
+                value={topK}
+                onChange={(e) => setTopK(Number(e.target.value))}
+                className={cn(fieldClasses, "h-8 pr-8 text-sm")}
+              >
+                {TOP_K_OPTIONS.map((k) => (
+                  <option key={k} value={k}>
+                    {k}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </form>
+      </Card>
 
-      {error && (
-        <p
-          role="alert"
-          className="rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300"
-        >
-          {error}
-        </p>
-      )}
+      {error && <Alert>{error}</Alert>}
 
       {response && (
-        <section className="space-y-3" aria-live="polite">
-          <p className="text-xs text-neutral-500">
-            {response.results.length} resultado(s) · modelo{" "}
-            <code className="font-mono">{response.embedding_model}</code> · embedding{" "}
-            {Math.round(response.embed_ms)} ms · busca {Math.round(response.search_ms)} ms
-          </p>
+        <section className="animate-fade-in space-y-3" aria-live="polite">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+            <span className="font-medium text-text">
+              {response.results.length} resultado(s)
+            </span>
+            <Badge tone="accent">
+              <span className="font-mono">{response.embedding_model}</span>
+            </Badge>
+            <span className="inline-flex items-center gap-1">
+              <Clock className="size-3.5" aria-hidden />
+              embedding {Math.round(response.embed_ms)} ms · busca{" "}
+              {Math.round(response.search_ms)} ms
+            </span>
+          </div>
           {response.warnings.map((w) => (
-            <p
-              key={w}
-              className="rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-            >
+            <Alert key={w} tone="warning">
               {w}
-            </p>
+            </Alert>
           ))}
           {response.results.length === 0 && response.warnings.length === 0 && (
-            <p className="py-6 text-center text-sm text-neutral-500">
-              Nenhum trecho encontrado. Envie documentos na Biblioteca.
-            </p>
+            <EmptyState icon={SearchX} title="Nenhum trecho encontrado">
+              Envie documentos na Biblioteca ou tente outra pergunta.
+            </EmptyState>
           )}
           <ol className="space-y-3">
             {response.results.map((r) => (
-              <li
-                key={r.chunk_id}
-                className="rounded-lg border border-neutral-200 dark:border-neutral-800"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200 px-4 py-2 text-xs text-neutral-500 dark:border-neutral-800">
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <span className="font-medium text-neutral-700 dark:text-neutral-300">
-                      #{r.rank}
-                    </span>
-                    <Link
-                      href={`/biblioteca/${r.document_id}?view=chunks`}
-                      className="font-medium text-indigo-600 hover:underline"
-                    >
-                      {r.filename}
-                    </Link>
-                    <span>{pageLabel(r.page_start, r.page_end)}</span>
-                    <span>chunk {r.chunk_index}</span>
-                  </div>
-                  <ScoreBar score={r.score} />
-                </div>
-                <p className="px-4 py-3 text-sm whitespace-pre-wrap">{r.text}</p>
+              <li key={r.chunk_id}>
+                <Card className="transition hover:border-border-strong">
+                  <CardHeader className="justify-between">
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+                      <span className="font-mono font-medium text-text">#{r.rank}</span>
+                      <Link
+                        href={`/biblioteca/${r.document_id}?view=chunks`}
+                        className="inline-flex min-w-0 items-center gap-1.5 font-medium text-link hover:underline"
+                      >
+                        <FileText className="size-3.5 shrink-0" aria-hidden />
+                        <span className="truncate">{r.filename}</span>
+                      </Link>
+                      <Badge tone="info">{pageLabel(r.page_start, r.page_end)}</Badge>
+                      <span>chunk {r.chunk_index}</span>
+                    </div>
+                    <ScoreBar score={r.score} />
+                  </CardHeader>
+                  <p className="px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap text-text">
+                    {r.text}
+                  </p>
+                </Card>
               </li>
             ))}
           </ol>

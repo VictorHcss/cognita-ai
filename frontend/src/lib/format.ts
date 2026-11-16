@@ -16,10 +16,3 @@ export const STATUS_LABEL: Record<DocumentStatus, string> = {
   processed: "Processado",
   failed: "Falhou",
 };
-
-export const STATUS_STYLE: Record<DocumentStatus, string> = {
-  uploaded: "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300",
-  processing: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-  processed: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-  failed: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
-};
