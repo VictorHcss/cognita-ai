@@ -13,6 +13,12 @@ export const MODULES: AppModule[] = [
     stage: 2,
   },
   {
+    href: "/busca",
+    label: "Busca",
+    description: "Encontre trechos pelo significado, com pontuação de similaridade.",
+    stage: 4,
+  },
+  {
     href: "/chat",
     label: "Chat",
     description: "Converse com suas bases de conhecimento, com fontes.",

@@ -1,0 +1,17 @@
+{
+  "description": "Perguntas parafraseadas sobre evaluation/datasets/temas.md (envie-o na Biblioteca antes de rodar). 'expected' é um trecho que precisa aparecer no chunk recuperado.",
+  "cases": [
+    {"question": "Quanto dinheiro devo guardar para imprevistos?", "expected": "seis a doze meses", "document": "temas.md"},
+    {"question": "Como deixar o arroz do risoto cremoso?", "expected": "manteiga gelada", "document": "temas.md"},
+    {"question": "O que acontece quando uma estrela gigante morre?", "expected": "estrelas muito massivas colapsam", "document": "temas.md"},
+    {"question": "Quantas vezes a seleção canarinho ganhou o mundial?", "expected": "cinco títulos", "document": "temas.md"},
+    {"question": "Que imagem histórica os astrônomos conseguiram em 2019?", "expected": "fotografou a sombra", "document": "temas.md"},
+    {"question": "Como dividir o salário entre gastos e economia?", "expected": "regra 50-30-20", "document": "temas.md"},
+    {"question": "Quais dívidas devo quitar antes de aplicar na bolsa?", "expected": "cartão de crédito", "document": "temas.md"},
+    {"question": "Qual é o ponto certo do grão?", "expected": "al dente", "document": "temas.md"},
+    {"question": "Como se decide uma partida empatada no mata-mata?", "expected": "disputas de pênaltis", "document": "temas.md"},
+    {"question": "O que existe no centro da nossa galáxia?", "expected": "Sagitário A*", "document": "temas.md"},
+    {"question": "Por que os eventos cósmicos geram ondulações no espaço-tempo detectáveis aqui?", "expected": "ondas gravitacionais", "document": "temas.md"},
+    {"question": "Que estilos táticos são comuns no futebol atual?", "expected": "pressão alta", "document": "temas.md"}
+  ]
+}

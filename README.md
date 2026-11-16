@@ -60,6 +60,19 @@ cd backend && pytest
 cd frontend && npm run lint && npm run build
 ```
 
+> Não rode `npm run build` com o `npm run dev` ligado: os dois usam a pasta `.next`.
+> Se a interface parar de responder, pare o dev, apague `frontend/.next` e suba de novo.
+
+### Avaliação da busca
+
+Com o arquivo `backend/evaluation/datasets/temas.md` enviado na Biblioteca:
+
+```bash
+cd backend && python -m scripts.eval_retrieval evaluation/datasets/temas.json --verbose
+```
+
+Mostra hit@1, hit@3, hit@5, MRR e latência média (ver `docs/aprendizado/04-busca-semantica.md`).
+
 ## Roadmap
 
-Veja [docs/roadmap.md](docs/roadmap.md). Status atual: **Etapa 3 — Processamento e embeddings** concluída.
+Veja [docs/roadmap.md](docs/roadmap.md). Status atual: **Etapa 4 — Busca semântica** concluída.

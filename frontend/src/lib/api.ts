@@ -102,3 +102,36 @@ export function uploadDocument(file: File, collectionId?: string) {
 }
 
 export const ACCEPTED_EXTENSIONS = ".pdf,.docx,.txt,.md,.markdown";
+
+export type SearchResult = {
+  rank: number;
+  score: number;
+  chunk_id: number;
+  chunk_index: number;
+  document_id: string;
+  filename: string;
+  collection_id: string | null;
+  page_start: number;
+  page_end: number;
+  text: string;
+};
+
+export type SearchResponse = {
+  query: string;
+  embedding_model: string;
+  results: SearchResult[];
+  embed_ms: number;
+  search_ms: number;
+  warnings: string[];
+};
+
+export type SearchParams = {
+  query: string;
+  top_k?: number;
+  collection_id?: string;
+  document_id?: string;
+  min_score?: number;
+};
+
+export const searchChunks = (params: SearchParams) =>
+  request<SearchResponse>("/api/search", json("POST", params));

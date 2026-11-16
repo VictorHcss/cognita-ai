@@ -12,6 +12,7 @@ from app.db.models import EMBEDDING_DIM, Base
 from app.db.session import get_db
 from app.main import app
 from app.providers.fake import FakeEmbeddingProvider
+from app.providers.registry import get_embedding_provider
 from app.storage.base import get_storage
 from app.storage.local import LocalStorage
 
@@ -57,6 +58,7 @@ def client(session_factory, tmp_path, monkeypatch) -> Iterator[TestClient]:
     monkeypatch.setattr(documents_api, "get_sessionmaker", lambda: session_factory)
     embedder = FakeEmbeddingProvider(dimensions=EMBEDDING_DIM)
     monkeypatch.setattr(documents_api, "get_embedding_provider", lambda: embedder)
+    app.dependency_overrides[get_embedding_provider] = lambda: embedder
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
